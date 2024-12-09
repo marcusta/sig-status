@@ -10,8 +10,8 @@ export function loadConfig(): AppConfig {
 
   return {
     port: 3004,
-    softThreshold: 50,
-    hardThreshold: 20,
+    softThreshold: 30,
+    hardThreshold: 10,
     gmailUser: required("GMAIL_USER"),
     gmailPassword: required("GMAIL_PASSWORD"),
     recipientEmail: required("RECIPIENT_EMAIL"),

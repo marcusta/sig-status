@@ -41,6 +41,8 @@ export class MonitoringApp {
   }
 
   private async checkThresholds(status: DriveStatus): Promise<void> {
+    const hardThresholdReminderTime = 60 * 60 * 1000;
+    const softThresholdReminderTime = 24 * 60 * 60 * 1000;
     const minSpace = Math.min(status.cDriveSpace, status.dDriveSpace);
     const lastEmailSent = await this.statusRepo.getLastEmailSentForMachine(
       status.machine
@@ -48,16 +50,11 @@ export class MonitoringApp {
     console.log(
       `Last email sent for ${status.machine}: ${lastEmailSent?.toISOString()}`
     );
+    const timeSinceLastEmail = Date.now() - (lastEmailSent?.getTime() || 0);
     if (
-      lastEmailSent &&
-      lastEmailSent.getTime() > Date.now() - 24 * 60 * 60 * 1000
+      minSpace < this.config.hardThreshold &&
+      timeSinceLastEmail > hardThresholdReminderTime
     ) {
-      console.log(
-        `Skipping email for ${status.machine} because it was sent less than 24 hours ago`
-      );
-      return;
-    }
-    if (minSpace < this.config.hardThreshold) {
       console.log(
         `Sending error email for ${status.machine} because it has less than ${this.config.hardThreshold} GB of free space`
       );
@@ -66,7 +63,10 @@ export class MonitoringApp {
         status.machine,
         new Date()
       );
-    } else if (minSpace < this.config.softThreshold) {
+    } else if (
+      minSpace < this.config.softThreshold &&
+      timeSinceLastEmail > softThresholdReminderTime
+    ) {
       console.log(
         `Sending warning email for ${status.machine} because it has less than ${this.config.softThreshold} GB of free space`
       );
