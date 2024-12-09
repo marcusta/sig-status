@@ -42,11 +42,27 @@ export class MonitoringApp {
 
   private async checkThresholds(status: DriveStatus): Promise<void> {
     const minSpace = Math.min(status.cDriveSpace, status.dDriveSpace);
-
+    const lastEmailSent = await this.statusRepo.getLastEmailSentForMachine(
+      status.machine
+    );
+    if (
+      lastEmailSent &&
+      lastEmailSent.getTime() > Date.now() - 24 * 60 * 60 * 1000
+    ) {
+      return;
+    }
     if (minSpace < this.config.hardThreshold) {
       await this.emailService.sendErrorEmail(status.machine, status);
+      await this.statusRepo.setLastEmailSentForMachine(
+        status.machine,
+        new Date()
+      );
     } else if (minSpace < this.config.softThreshold) {
       await this.emailService.sendWarningEmail(status.machine, status);
+      await this.statusRepo.setLastEmailSentForMachine(
+        status.machine,
+        new Date()
+      );
     }
   }
 

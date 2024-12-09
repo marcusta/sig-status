@@ -15,7 +15,8 @@ export class SqliteStatusRepository implements StatusRepository {
         machine TEXT NOT NULL PRIMARY KEY,
         timestamp DATETIME NOT NULL,
         c_drive_space REAL NOT NULL,
-        d_drive_space REAL NOT NULL
+        d_drive_space REAL NOT NULL,
+        last_email_sent DATETIME
       )
     `);
   }
@@ -45,6 +46,32 @@ export class SqliteStatusRepository implements StatusRepository {
         status.dDriveSpace,
       ]);
     }
+  }
+
+  async setLastEmailSentForMachine(
+    machine: string,
+    timestamp: Date
+  ): Promise<void> {
+    const lastEmailSent = await this.getLastEmailSentForMachine(machine);
+    if (lastEmailSent) {
+      this.db.run(
+        `UPDATE machine_status SET last_email_sent = ? WHERE machine = ?`,
+        [timestamp.toISOString(), machine]
+      );
+    } else {
+      this.db.run(
+        `INSERT INTO machine_status (machine, last_email_sent) VALUES (?, ?)`,
+        [machine, timestamp.toISOString()]
+      );
+    }
+  }
+
+  async getLastEmailSentForMachine(machine: string): Promise<Date | null> {
+    const query = `SELECT last_email_sent FROM machine_status WHERE machine = ?`;
+    const result = this.db.prepare(query).get(machine) as {
+      last_email_sent: string;
+    } | null;
+    return result ? new Date(result.last_email_sent) : null;
   }
 
   async getMachineStatus(machine: string): Promise<DriveStatus | null> {

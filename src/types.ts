@@ -9,6 +9,8 @@ export interface StatusRepository {
   saveStatus(status: DriveStatus): Promise<void>;
   getLatestStatuses(): Promise<DriveStatus[]>;
   getLatestStatusForMachine(machine: string): Promise<DriveStatus | null>;
+  getLastEmailSentForMachine(machine: string): Promise<Date | null>;
+  setLastEmailSentForMachine(machine: string, timestamp: Date): Promise<void>;
 }
 
 export interface EmailService {
