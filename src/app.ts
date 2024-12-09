@@ -45,19 +45,31 @@ export class MonitoringApp {
     const lastEmailSent = await this.statusRepo.getLastEmailSentForMachine(
       status.machine
     );
+    console.log(
+      `Last email sent for ${status.machine}: ${lastEmailSent?.toISOString()}`
+    );
     if (
       lastEmailSent &&
       lastEmailSent.getTime() > Date.now() - 24 * 60 * 60 * 1000
     ) {
+      console.log(
+        `Skipping email for ${status.machine} because it was sent less than 24 hours ago`
+      );
       return;
     }
     if (minSpace < this.config.hardThreshold) {
+      console.log(
+        `Sending error email for ${status.machine} because it has less than ${this.config.hardThreshold} GB of free space`
+      );
       await this.emailService.sendErrorEmail(status.machine, status);
       await this.statusRepo.setLastEmailSentForMachine(
         status.machine,
         new Date()
       );
     } else if (minSpace < this.config.softThreshold) {
+      console.log(
+        `Sending warning email for ${status.machine} because it has less than ${this.config.softThreshold} GB of free space`
+      );
       await this.emailService.sendWarningEmail(status.machine, status);
       await this.statusRepo.setLastEmailSentForMachine(
         status.machine,
