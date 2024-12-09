@@ -45,9 +45,10 @@ export class GmailEmailService implements EmailService {
     console.log(
       `Sending email to ${this.recipientEmail} with subject: ${subject}`
     );
+    const recipients = this.recipientEmail.split(",");
     await this.transporter.sendMail({
       from: this.gmailUser,
-      to: this.recipientEmail,
+      to: recipients,
       subject,
       text,
     });
