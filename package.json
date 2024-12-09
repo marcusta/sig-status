@@ -1,0 +1,16 @@
+{
+  "name": "sig-status",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/nodemailer": "^6.4.17"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "hono": "^4.6.13",
+    "nodemailer": "^6.9.16"
+  }
+}
