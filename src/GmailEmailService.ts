@@ -42,6 +42,9 @@ export class GmailEmailService implements EmailService {
   }
 
   private async sendEmail(subject: string, text: string): Promise<void> {
+    console.log(
+      `Sending email to ${this.recipientEmail} with subject: ${subject}`
+    );
     await this.transporter.sendMail({
       from: this.gmailUser,
       to: this.recipientEmail,
