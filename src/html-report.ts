@@ -24,21 +24,28 @@ export function htmlReport(statuses: DriveStatus[]): string {
                 <tbody>
                   ${statuses
                     .map((status) => {
-                      const warningLevel =
-                        status.cDriveSpace < 10
+                      const cWarningLevel =
+                        status.c_drive_space < 10
                           ? "danger"
-                          : status.cDriveSpace < 20
+                          : status.c_drive_space < 20
                           ? "warning"
                           : "";
+                      const dWarningLevel =
+                        status.d_drive_space < 10
+                          ? "danger"
+                          : status.d_drive_space < 20
+                          ? "warning"
+                          : "";
+
                       return `
-                        <tr class="${warningLevel}">
+                        <tr}">
                           <td class="is-size-5">${status.machine}</td>
-                          <td class="is-size-5">${status.c_drive_space?.toFixed(
-                            1
-                          )}</td>
-                          <td class="is-size-5">${status.d_drive_space?.toFixed(
-                            1
-                          )}</td>
+                          <td class="is-size-5 ${cWarningLevel}">${status.c_drive_space?.toFixed(
+                        1
+                      )}</td>
+                          <td class="is-size-5 ${dWarningLevel}">${status.d_drive_space?.toFixed(
+                        1
+                      )}</td>
                           <td class="is-size-5">${formatDate(
                             status.last_email_sent
                           )}</td>
