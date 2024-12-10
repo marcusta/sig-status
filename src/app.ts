@@ -35,18 +35,21 @@ export class MonitoringApp {
     });
 
     this.app.get("/status/:machine", async (c) => {
+      console.log("Getting status for machine");
       const machine = c.req.param("machine");
       const status = await this.statusRepo.getLatestStatusForMachine(machine);
       return c.json(status);
     });
 
     this.app.get("/status", async (c) => {
+      console.log("Getting all statuses");
       const statuses = await this.statusRepo.getLatestStatuses();
       return c.json(statuses);
     });
 
-    this.app.get("/status/report", async (c) => {
+    this.app.get("/status.html", async (c) => {
       const statuses = await this.statusRepo.getLatestStatuses();
+      console.log(statuses);
       return c.html(htmlReport(statuses));
     });
   }
