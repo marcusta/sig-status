@@ -1,9 +1,19 @@
+import type { DriveStatus } from "./types";
+
 export function htmlReport(statuses: DriveStatus[]): string {
   return `
     <html>
       <head>
         <title>Drive Status Report</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+        <style>
+          .danger {
+            background-color: red;
+          }
+          .warning {
+            background-color: orange;
+          }
+        </style>
       </head>
       <body>
         <section class="section">
@@ -36,7 +46,7 @@ export function htmlReport(statuses: DriveStatus[]): string {
                           : status.d_drive_space < 20
                           ? "warning"
                           : "";
-
+                      console.log(cWarningLevel, " :: d :: ", dWarningLevel);
                       return `
                         <tr}">
                           <td class="is-size-5">${status.machine}</td>

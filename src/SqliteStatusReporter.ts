@@ -33,8 +33,8 @@ export class SqliteStatusRepository implements StatusRepository {
       `;
       this.db.run(query, [
         status.timestamp,
-        status.cDriveSpace,
-        status.dDriveSpace,
+        status.c_drive_space,
+        status.d_drive_space,
         status.machine,
       ]);
     } else {
@@ -42,8 +42,8 @@ export class SqliteStatusRepository implements StatusRepository {
       this.db.run(query, [
         status.machine,
         status.timestamp,
-        status.cDriveSpace,
-        status.dDriveSpace,
+        status.c_drive_space,
+        status.d_drive_space,
       ]);
     }
   }

@@ -1,8 +1,9 @@
 export interface DriveStatus {
   machine: string;
   timestamp: string;
-  cDriveSpace: number;
-  dDriveSpace: number;
+  c_drive_space: number;
+  d_drive_space: number;
+  last_email_sent: string;
 }
 
 export interface StatusRepository {

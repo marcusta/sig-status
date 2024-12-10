@@ -57,7 +57,7 @@ export class MonitoringApp {
   private async checkThresholds(status: DriveStatus): Promise<void> {
     const hardThresholdReminderTime = 60 * 60 * 1000;
     const softThresholdReminderTime = 24 * 60 * 60 * 1000;
-    const minSpace = Math.min(status.cDriveSpace, status.dDriveSpace);
+    const minSpace = Math.min(status.c_drive_space, status.d_drive_space);
     const lastEmailSent = await this.statusRepo.getLastEmailSentForMachine(
       status.machine
     );
