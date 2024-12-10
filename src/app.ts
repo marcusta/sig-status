@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { htmlReport } from "./html-report";
 import type {
   AppConfig,
   DriveStatus,
@@ -42,6 +43,11 @@ export class MonitoringApp {
     this.app.get("/status", async (c) => {
       const statuses = await this.statusRepo.getLatestStatuses();
       return c.json(statuses);
+    });
+
+    this.app.get("/status/report", async (c) => {
+      const statuses = await this.statusRepo.getLatestStatuses();
+      return c.html(htmlReport(statuses));
     });
   }
 
