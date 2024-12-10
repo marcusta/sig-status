@@ -18,6 +18,7 @@ export function htmlReport(statuses: DriveStatus[]): string {
                     <th>C Drive Space (GB)</th>
                     <th>D Drive Space (GB)</th>
                     <th>Last Email Sent</th>
+                    <th>Last updated</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -32,15 +33,18 @@ export function htmlReport(statuses: DriveStatus[]): string {
                       return `
                         <tr class="${warningLevel}">
                           <td class="is-size-5">${status.machine}</td>
-                          <td class="is-size-5">${status.cDriveSpace?.toFixed(
+                          <td class="is-size-5">${status.c_drive_space?.toFixed(
                             1
                           )}</td>
-                          <td class="is-size-5">${status.dDriveSpace?.toFixed(
+                          <td class="is-size-5">${status.d_drive_space?.toFixed(
                             1
                           )}</td>
-                          <td class="is-size-5">${
-                            status.lastEmailSent?.toISOString() || ""
-                          }</td>
+                          <td class="is-size-5">${formatDate(
+                            status.last_email_sent
+                          )}</td>
+                          <td class="is-size-5">${formatDate(
+                            status.timestamp
+                          )}</td>
                         </tr>
                       `;
                     })
@@ -58,4 +62,18 @@ export function htmlReport(statuses: DriveStatus[]): string {
       </body>
     </html>
   `;
+}
+
+function formatDate(dateAsString: string): string {
+  // format as 10.12.2024 10:00
+  if (!dateAsString) {
+    return "";
+  }
+  return new Date(dateAsString).toLocaleString("sv-SE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
