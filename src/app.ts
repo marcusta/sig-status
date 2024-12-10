@@ -38,6 +38,11 @@ export class MonitoringApp {
       const status = await this.statusRepo.getLatestStatusForMachine(machine);
       return c.json(status);
     });
+
+    this.app.get("/status", async (c) => {
+      const statuses = await this.statusRepo.getLatestStatuses();
+      return c.json(statuses);
+    });
   }
 
   private async checkThresholds(status: DriveStatus): Promise<void> {
