@@ -81,7 +81,7 @@ export function htmlReport(statuses: DriveStatus[]): string {
   `;
 }
 
-function formatDate(dateAsString: string): string {
+export function formatDate(dateAsString: string): string {
   // format as 10.12.2024 10:00
   if (!dateAsString) {
     return "";
