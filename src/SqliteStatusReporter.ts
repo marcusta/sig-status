@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import type { DriveStatus, StatusRepository } from "./types";
+import type { DriveStatus, DriveStatusReport, StatusRepository } from "./types";
 
 export class SqliteStatusRepository implements StatusRepository {
   private db: Database;
@@ -21,7 +21,7 @@ export class SqliteStatusRepository implements StatusRepository {
     `);
   }
 
-  async saveStatus(status: DriveStatus): Promise<void> {
+  async saveStatus(status: DriveStatusReport): Promise<void> {
     const existingStatus = await this.getMachineStatus(status.machine);
     console.log("existingStatus", existingStatus);
     console.log("new status", status);

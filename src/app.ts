@@ -2,10 +2,19 @@ import { Hono } from "hono";
 import { htmlReport } from "./html-report";
 import type {
   AppConfig,
-  DriveStatus,
+  DriveStatusReport,
   EmailService,
   StatusRepository,
 } from "./types";
+
+interface StatusPost {
+  machine: string;
+  cDriveSpace?: number;
+  dDriveSpace?: number;
+  timestamp: string;
+  c_drive_space?: number;
+  d_drive_space?: number;
+}
 
 export class MonitoringApp {
   private app = new Hono();
@@ -27,10 +36,18 @@ export class MonitoringApp {
 
   private setupRoutes(): void {
     this.app.post("/status", async (c) => {
-      const status: DriveStatus = await c.req.json();
+      // post object may contain values of format cDriveSpace and dDriveSpace as keys
+      // convert them to c_drive_space and d_drive_space if so
+      const status: StatusPost = await c.req.json();
+      const driveStatus: DriveStatusReport = {
+        machine: status.machine,
+        c_drive_space: status.cDriveSpace || status.c_drive_space || 0,
+        d_drive_space: status.dDriveSpace || status.d_drive_space || 0,
+        timestamp: status.timestamp,
+      };
       console.log(`Received status for ${status.machine}`);
-      await this.statusRepo.saveStatus(status);
-      await this.checkThresholds(status);
+      await this.statusRepo.saveStatus(driveStatus);
+      await this.checkThresholds(driveStatus);
       return c.json({ success: true });
     });
 
@@ -54,7 +71,7 @@ export class MonitoringApp {
     });
   }
 
-  private async checkThresholds(status: DriveStatus): Promise<void> {
+  private async checkThresholds(status: DriveStatusReport): Promise<void> {
     const hardThresholdReminderTime = 60 * 60 * 1000;
     const softThresholdReminderTime = 24 * 60 * 60 * 1000;
     const minSpace = Math.min(status.c_drive_space, status.d_drive_space);

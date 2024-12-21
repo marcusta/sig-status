@@ -1,3 +1,10 @@
+export interface DriveStatusReport {
+  machine: string;
+  c_drive_space: number;
+  d_drive_space: number;
+  timestamp: string;
+}
+
 export interface DriveStatus {
   machine: string;
   timestamp: string;
@@ -7,7 +14,7 @@ export interface DriveStatus {
 }
 
 export interface StatusRepository {
-  saveStatus(status: DriveStatus): Promise<void>;
+  saveStatus(status: DriveStatusReport): Promise<void>;
   getLatestStatuses(): Promise<DriveStatus[]>;
   getLatestStatusForMachine(machine: string): Promise<DriveStatus | null>;
   getLastEmailSentForMachine(machine: string): Promise<Date | null>;
