@@ -23,6 +23,7 @@ export class SqliteStatusRepository implements StatusRepository {
 
   async saveStatus(status: DriveStatus): Promise<void> {
     const existingStatus = await this.getMachineStatus(status.machine);
+    console.log("existingStatus", existingStatus);
     if (existingStatus) {
       const query = `
         UPDATE machine_status SET
