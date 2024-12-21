@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { formatDate } from "./html-report";
 import type { DriveStatus, EmailService } from "./types";
 
 export class GmailEmailService implements EmailService {
@@ -18,14 +19,20 @@ export class GmailEmailService implements EmailService {
   async sendWarningEmail(machine: string, status: DriveStatus): Promise<void> {
     await this.sendEmail(
       "Drive Space Warning",
-      `Low drive space warning for ${machine}:\nC: ${status.cDriveSpace}GB\nD: ${status.dDriveSpace}GB`
+      `Low drive space warning for ${machine}:\nC: ${
+        status.c_drive_space
+      }GB\nD: ${status.d_drive_space}GB, Senast inskickad status: ${formatDate(
+        status.timestamp
+      )}`
     );
   }
 
   async sendErrorEmail(machine: string, status: DriveStatus): Promise<void> {
     await this.sendEmail(
       "Drive Space Critical",
-      `Critical drive space for ${machine}:\nC: ${status.cDriveSpace}GB\nD: ${status.dDriveSpace}GB`
+      `Critical drive space for ${machine}:\nC: ${status.c_drive_space}GB\nD: ${
+        status.d_drive_space
+      }GB, senast inskickad status: ${formatDate(status.timestamp)}`
     );
   }
 
@@ -34,7 +41,10 @@ export class GmailEmailService implements EmailService {
       "Status från stationerna vid deras senaste uppdatering:\n" +
       statuses
         .map(
-          (s) => `${s.machine}: C: ${s.cDriveSpace}GB, D: ${s.dDriveSpace}GB`
+          (s) =>
+            `${s.machine}: C: ${s.c_drive_space}GB, D: ${
+              s.d_drive_space
+            }GB, senast inskickad status: ${formatDate(s.timestamp)}`
         )
         .join("\n");
 
