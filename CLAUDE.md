@@ -59,6 +59,15 @@ Hardcoded in `config.ts`:
 
 The app runs on port 3004 and is exposed via a Caddy reverse proxy at `https://app.swedenindoorgolf.se/sig-status/`. The bay PCs send requests to this public URL (e.g. `POST https://app.swedenindoorgolf.se/sig-status/status`). The dashboard is at `https://app.swedenindoorgolf.se/sig-status/status.html`.
 
+This service participates in a shared deployment system (managed in the `sig-infra` repo). The deploy system handles:
+- Downloading the production SQLite DB locally
+- Running migrations and validation against the local copy
+- Uploading the migrated DB if validation passes
+- Deploying new code and restarting the service
+- Automatic rollback of both DB and code on failure
+
+Configuration for this is in `deploy.json`. See the "Database Migrations" section below for how to add schema changes.
+
 ## Database Migrations
 
 Database schema changes are handled via `scripts/migrate.ts`, executed by the deploy system *before* new code is deployed. This allows testing migrations against a local copy of the production DB before anything goes live.
