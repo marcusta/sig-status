@@ -40,22 +40,20 @@ export function htmlReport(statuses: DriveStatus[]): string {
                           : status.c_drive_space < 20
                           ? "warning"
                           : "";
-                      const dWarningLevel =
-                        status.d_drive_space < 10
+                      const dWarningLevel = status.d_drive_space != null
+                        ? (status.d_drive_space < 10
                           ? "danger"
                           : status.d_drive_space < 20
                           ? "warning"
-                          : "";
-                      console.log(cWarningLevel, " :: d :: ", dWarningLevel);
+                          : "")
+                        : "";
                       return `
-                        <tr}">
+                        <tr>
                           <td class="is-size-5">${status.machine}</td>
                           <td class="is-size-5 ${cWarningLevel}">${status.c_drive_space?.toFixed(
                         1
                       )}</td>
-                          <td class="is-size-5 ${dWarningLevel}">${status.d_drive_space?.toFixed(
-                        1
-                      )}</td>
+                          <td class="is-size-5 ${dWarningLevel}">${status.d_drive_space != null ? status.d_drive_space.toFixed(1) : "-"}</td>
                           <td class="is-size-5">${formatDate(
                             status.last_email_sent
                           )}</td>

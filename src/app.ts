@@ -41,8 +41,8 @@ export class MonitoringApp {
       const status: StatusPost = await c.req.json();
       const driveStatus: DriveStatusReport = {
         machine: status.machine,
-        c_drive_space: status.cDriveSpace || status.c_drive_space || 0,
-        d_drive_space: status.dDriveSpace || status.d_drive_space || 0,
+        c_drive_space: status.cDriveSpace ?? status.c_drive_space ?? 0,
+        d_drive_space: status.dDriveSpace ?? status.d_drive_space ?? null,
         timestamp: status.timestamp,
       };
       console.log(`Received status for ${status.machine}`);
@@ -74,7 +74,9 @@ export class MonitoringApp {
   private async checkThresholds(status: DriveStatusReport): Promise<void> {
     const hardThresholdReminderTime = 60 * 60 * 1000;
     const softThresholdReminderTime = 24 * 60 * 60 * 1000;
-    const minSpace = Math.min(status.c_drive_space, status.d_drive_space);
+    const minSpace = status.d_drive_space != null
+      ? Math.min(status.c_drive_space, status.d_drive_space)
+      : status.c_drive_space;
     const lastEmailSent = await this.statusRepo.getLastEmailSentForMachine(
       status.machine
     );

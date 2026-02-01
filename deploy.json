@@ -1,0 +1,7 @@
+{
+  "database": {
+    "path": "data/status.db",
+    "migrate": "bun run db:migrate",
+    "validate": "bun run db:health"
+  }
+}

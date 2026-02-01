@@ -2,6 +2,47 @@ import nodemailer from "nodemailer";
 import { formatDate } from "./html-report";
 import type { DriveStatus, EmailService } from "./types";
 
+function driveSpaceColor(gb: number): string {
+  if (gb < 10) return "#e74c3c";
+  if (gb < 20) return "#e67e22";
+  if (gb < 30) return "#f1c40f";
+  return "#2ecc71";
+}
+
+function driveCell(value: number | null): string {
+  if (value == null) return `<td style="padding:8px 12px;text-align:right;">-</td>`;
+  const color = driveSpaceColor(value);
+  return `<td style="padding:8px 12px;text-align:right;"><span style="color:${color};font-weight:bold;">${value.toFixed(1)} GB</span></td>`;
+}
+
+function alertEmailHtml(
+  severity: "warning" | "critical",
+  machine: string,
+  status: DriveStatus
+): string {
+  const color = severity === "critical" ? "#e74c3c" : "#e67e22";
+  const label = severity === "critical" ? "KRITISKT" : "VARNING";
+  const dDriveRow =
+    status.d_drive_space != null
+      ? `<tr><td style="padding:6px 12px;">D:</td>${driveCell(status.d_drive_space)}</tr>`
+      : "";
+
+  return `
+<div style="font-family:sans-serif;max-width:500px;">
+  <div style="background:${color};color:#fff;padding:12px 16px;border-radius:6px 6px 0 0;font-size:18px;font-weight:bold;">
+    ${label}: Diskutrymme lågt
+  </div>
+  <div style="border:1px solid #ddd;border-top:none;padding:16px;border-radius:0 0 6px 6px;">
+    <p style="margin:0 0 12px;font-size:16px;"><strong>${machine}</strong></p>
+    <table style="border-collapse:collapse;">
+      <tr><td style="padding:6px 12px;">C:</td>${driveCell(status.c_drive_space)}</tr>
+      ${dDriveRow}
+    </table>
+    <p style="margin:12px 0 0;color:#888;font-size:13px;">Senast inskickad status: ${formatDate(status.timestamp)}</p>
+  </div>
+</div>`;
+}
+
 export class GmailEmailService implements EmailService {
   private transporter: nodemailer.Transporter;
   private recipientEmail: string;
@@ -18,40 +59,53 @@ export class GmailEmailService implements EmailService {
 
   async sendWarningEmail(machine: string, status: DriveStatus): Promise<void> {
     await this.sendEmail(
-      "Drive Space Warning",
-      `Low drive space warning for ${machine}:\nC: ${
-        status.c_drive_space
-      }GB\nD: ${status.d_drive_space}GB, Senast inskickad status: ${formatDate(
-        status.timestamp
-      )}`
+      `⚠️ Drive Space Warning: ${machine}`,
+      alertEmailHtml("warning", machine, status)
     );
   }
 
   async sendErrorEmail(machine: string, status: DriveStatus): Promise<void> {
     await this.sendEmail(
-      "Drive Space Critical",
-      `Critical drive space for ${machine}:\nC: ${status.c_drive_space}GB\nD: ${
-        status.d_drive_space
-      }GB, senast inskickad status: ${formatDate(status.timestamp)}`
+      `🔴 Drive Space Critical: ${machine}`,
+      alertEmailHtml("critical", machine, status)
     );
   }
 
   async sendDailyReport(statuses: DriveStatus[]): Promise<void> {
-    const report =
-      "Status från stationerna vid deras senaste uppdatering:\n" +
-      statuses
-        .map(
-          (s) =>
-            `${s.machine}: C: ${s.c_drive_space}GB, D: ${
-              s.d_drive_space
-            }GB, senast inskickad status: ${formatDate(s.timestamp)}`
-        )
-        .join("\n");
+    const hasDDrive = statuses.some((s) => s.d_drive_space != null);
+    const dHeader = hasDDrive ? `<th style="padding:8px 12px;text-align:right;">D:</th>` : "";
+    const rows = statuses
+      .map((s) => {
+        const dCell = hasDDrive ? driveCell(s.d_drive_space) : "";
+        return `<tr style="border-bottom:1px solid #eee;">
+          <td style="padding:8px 12px;font-weight:bold;">${s.machine}</td>
+          ${driveCell(s.c_drive_space)}
+          ${dCell}
+          <td style="padding:8px 12px;color:#888;">${formatDate(s.timestamp)}</td>
+        </tr>`;
+      })
+      .join("");
 
-    await this.sendEmail("Daily status från stationerna", report);
+    const html = `
+<div style="font-family:sans-serif;max-width:600px;">
+  <h2 style="margin:0 0 12px;">Daglig statusrapport</h2>
+  <table style="border-collapse:collapse;width:100%;">
+    <thead>
+      <tr style="background:#f5f5f5;border-bottom:2px solid #ddd;">
+        <th style="padding:8px 12px;text-align:left;">Station</th>
+        <th style="padding:8px 12px;text-align:right;">C:</th>
+        ${dHeader}
+        <th style="padding:8px 12px;text-align:left;">Senast uppdaterad</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+</div>`;
+
+    await this.sendEmail("Daglig status från stationerna", html);
   }
 
-  private async sendEmail(subject: string, text: string): Promise<void> {
+  private async sendEmail(subject: string, html: string): Promise<void> {
     console.log(
       `Sending email to ${this.recipientEmail} with subject: ${subject}`
     );
@@ -60,7 +114,7 @@ export class GmailEmailService implements EmailService {
       from: this.gmailUser,
       to: recipients,
       subject,
-      text,
+      html,
     });
   }
 }

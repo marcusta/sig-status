@@ -1,7 +1,7 @@
 export interface DriveStatusReport {
   machine: string;
   c_drive_space: number;
-  d_drive_space: number;
+  d_drive_space: number | null;
   timestamp: string;
 }
 
@@ -9,7 +9,7 @@ export interface DriveStatus {
   machine: string;
   timestamp: string;
   c_drive_space: number;
-  d_drive_space: number;
+  d_drive_space: number | null;
   last_email_sent: string;
 }
 

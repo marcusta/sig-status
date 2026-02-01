@@ -15,7 +15,7 @@ export class SqliteStatusRepository implements StatusRepository {
         machine TEXT NOT NULL PRIMARY KEY,
         timestamp DATETIME NOT NULL,
         c_drive_space REAL NOT NULL,
-        d_drive_space REAL NOT NULL,
+        d_drive_space REAL,
         last_email_sent DATETIME
       )
     `);

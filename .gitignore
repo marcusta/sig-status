@@ -1,5 +1,9 @@
 *.db
 
+# Deployment artifacts
+deploy-tmp/
+*.local-backup
+
 # Logs
 logs
 *.log

@@ -2,6 +2,10 @@
   "name": "sig-status",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "db:migrate": "bun ./scripts/migrate.ts",
+    "db:health": "bun ./scripts/health.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/nodemailer": "^6.4.17"
