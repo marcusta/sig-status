@@ -96,7 +96,7 @@ export class MonitoringApp {
     // ─── Contact form endpoint ───
 
     const corsHeaders = {
-      "Access-Control-Allow-Origin": `https://app.${ALLOWED_ORIGIN}`,
+      "Access-Control-Allow-Origin": `https://${ALLOWED_ORIGIN}`,
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
     };
