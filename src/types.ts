@@ -21,10 +21,19 @@ export interface StatusRepository {
   setLastEmailSentForMachine(machine: string, timestamp: Date): Promise<void>;
 }
 
+export interface ContactFormData {
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  message: string;
+}
+
 export interface EmailService {
   sendWarningEmail(machine: string, status: DriveStatus): Promise<void>;
   sendErrorEmail(machine: string, status: DriveStatus): Promise<void>;
   sendDailyReport(statuses: DriveStatus[]): Promise<void>;
+  sendContactEmail(data: ContactFormData): Promise<void>;
 }
 
 export interface AppConfig {

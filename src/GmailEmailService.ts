@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import { formatDate } from "./html-report";
-import type { DriveStatus, EmailService } from "./types";
+import type { ContactFormData, DriveStatus, EmailService } from "./types";
 
 function driveSpaceColor(gb: number): string {
   if (gb < 10) return "#e74c3c";
@@ -103,6 +103,43 @@ export class GmailEmailService implements EmailService {
 </div>`;
 
     await this.sendEmail("Daglig status från stationerna", html);
+  }
+
+  async sendContactEmail(data: ContactFormData): Promise<void> {
+    const phoneRow = data.phone
+      ? `<tr><td style="padding:6px 12px;color:#888;">Telefon:</td><td style="padding:6px 12px;">${data.phone}</td></tr>`
+      : "";
+    const companyRow = data.company
+      ? `<tr><td style="padding:6px 12px;color:#888;">Företag:</td><td style="padding:6px 12px;">${data.company}</td></tr>`
+      : "";
+
+    const html = `
+<div style="font-family:sans-serif;max-width:600px;">
+  <div style="background:#eab308;color:#000;padding:12px 16px;border-radius:6px 6px 0 0;font-size:18px;font-weight:bold;">
+    Nytt kontaktformulär
+  </div>
+  <div style="border:1px solid #ddd;border-top:none;padding:16px;border-radius:0 0 6px 6px;">
+    <table style="border-collapse:collapse;width:100%;">
+      <tr><td style="padding:6px 12px;color:#888;">Namn:</td><td style="padding:6px 12px;font-weight:bold;">${data.name}</td></tr>
+      <tr><td style="padding:6px 12px;color:#888;">Email:</td><td style="padding:6px 12px;">${data.email}</td></tr>
+      ${phoneRow}
+      ${companyRow}
+    </table>
+    <hr style="border:none;border-top:1px solid #eee;margin:16px 0;">
+    <p style="margin:0;white-space:pre-wrap;">${data.message}</p>
+  </div>
+</div>`;
+
+    const subject = `Kontaktformulär: ${data.name}`;
+    console.log(`Sending contact email to ${this.recipientEmail} with subject: ${subject}`);
+    const recipients = this.recipientEmail.split(",");
+    await this.transporter.sendMail({
+      from: this.gmailUser,
+      to: recipients,
+      replyTo: data.email,
+      subject,
+      html,
+    });
   }
 
   private async sendEmail(subject: string, html: string): Promise<void> {
