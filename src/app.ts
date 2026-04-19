@@ -37,7 +37,10 @@ function countUrls(text: string): number {
   return (text.match(urlPattern) || []).length;
 }
 
-const ALLOWED_ORIGIN = "swedenindoorgolf.se";
+const ALLOWED_ORIGINS = [
+  "https://swedenindoorgolf.se",
+  "https://www.swedenindoorgolf.se",
+];
 
 export class MonitoringApp {
   private app = new Hono();
@@ -95,23 +98,32 @@ export class MonitoringApp {
 
     // ─── Contact form endpoint ───
 
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": `https://${ALLOWED_ORIGIN}`,
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+    const buildCorsHeaders = (origin: string) => {
+      const allowed = ALLOWED_ORIGINS.includes(origin)
+        ? origin
+        : ALLOWED_ORIGINS[0];
+      return {
+        "Access-Control-Allow-Origin": allowed,
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        Vary: "Origin",
+      };
     };
 
     this.app.options("/contact", (c) => {
-      return c.body(null, 204, corsHeaders);
+      const origin = c.req.header("origin") || "";
+      return c.body(null, 204, buildCorsHeaders(origin));
     });
 
     this.app.post("/contact", async (c) => {
+      const origin = c.req.header("origin") || "";
       // CORS headers on every response
-      Object.entries(corsHeaders).forEach(([k, v]) => c.header(k, v));
+      Object.entries(buildCorsHeaders(origin)).forEach(([k, v]) =>
+        c.header(k, v)
+      );
 
       // Origin check
-      const origin = c.req.header("origin") || "";
-      if (!origin.includes(ALLOWED_ORIGIN)) {
+      if (!ALLOWED_ORIGINS.includes(origin)) {
         return c.json({ error: "Forbidden" }, 403);
       }
 
