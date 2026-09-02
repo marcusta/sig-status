@@ -1,6 +1,12 @@
 import nodemailer from "nodemailer";
-import { formatDate } from "./html-report";
-import type { ContactFormData, DriveStatus, EmailService } from "./types";
+import { formatDate, relayLabel } from "./html-report";
+import {
+  isRelayMissing,
+  type ContactFormData,
+  type DriveStatus,
+  type DriveStatusReport,
+  type EmailService,
+} from "./types";
 
 function driveSpaceColor(gb: number): string {
   if (gb < 10) return "#e74c3c";
@@ -15,10 +21,31 @@ function driveCell(value: number | null): string {
   return `<td style="padding:8px 12px;text-align:right;"><span style="color:${color};font-weight:bold;">${value.toFixed(1)} GB</span></td>`;
 }
 
+function relayCell(status: DriveStatus): string {
+  const color = isRelayMissing(status) ? "#e74c3c" : "#888";
+  return `<td style="padding:8px 12px;color:${color};">${relayLabel(status)}</td>`;
+}
+
+function relayMissingEmailHtml(machine: string, status: DriveStatusReport): string {
+  return `
+<div style="font-family:sans-serif;max-width:500px;">
+  <div style="background:#e74c3c;color:#fff;padding:12px 16px;border-radius:6px 6px 0 0;font-size:18px;font-weight:bold;">
+    VARNING: Indikatorlampa svarar inte
+  </div>
+  <div style="border:1px solid #ddd;border-top:none;padding:16px;border-radius:0 0 6px 6px;">
+    <p style="margin:0 0 12px;font-size:16px;"><strong>${machine}</strong></p>
+    <p style="margin:0 0 8px;">USB-relat (CP210x) hittas inte av datorn. Lampan vid bayen fungerar inte.</p>
+    <p style="margin:0 0 8px;">Fel: <code>${status.relay_error ?? "okänt"}</code></p>
+    <p style="margin:0 0 8px;">Kontrollera USB-kabeln till relakortet och prova en annan USB-port. Skriptet ansluter igen automatiskt när enheten hittas.</p>
+    <p style="margin:12px 0 0;color:#888;font-size:13px;">Senast kontrollerad: ${formatDate(status.relay_updated_at ?? status.timestamp)}</p>
+  </div>
+</div>`;
+}
+
 function alertEmailHtml(
   severity: "warning" | "critical",
   machine: string,
-  status: DriveStatus
+  status: DriveStatusReport
 ): string {
   const color = severity === "critical" ? "#e74c3c" : "#e67e22";
   const label = severity === "critical" ? "KRITISKT" : "VARNING";
@@ -57,17 +84,27 @@ export class GmailEmailService implements EmailService {
     this.gmailUser = gmailUser;
   }
 
-  async sendWarningEmail(machine: string, status: DriveStatus): Promise<void> {
+  async sendWarningEmail(machine: string, status: DriveStatusReport): Promise<void> {
     await this.sendEmail(
       `⚠️ Drive Space Warning: ${machine}`,
       alertEmailHtml("warning", machine, status)
     );
   }
 
-  async sendErrorEmail(machine: string, status: DriveStatus): Promise<void> {
+  async sendErrorEmail(machine: string, status: DriveStatusReport): Promise<void> {
     await this.sendEmail(
       `🔴 Drive Space Critical: ${machine}`,
       alertEmailHtml("critical", machine, status)
+    );
+  }
+
+  async sendRelayMissingEmail(
+    machine: string,
+    status: DriveStatusReport
+  ): Promise<void> {
+    await this.sendEmail(
+      `🔴 Indikatorlampa saknas: ${machine}`,
+      relayMissingEmailHtml(machine, status)
     );
   }
 
@@ -81,6 +118,7 @@ export class GmailEmailService implements EmailService {
           <td style="padding:8px 12px;font-weight:bold;">${s.machine}</td>
           ${driveCell(s.c_drive_space)}
           ${dCell}
+          ${relayCell(s)}
           <td style="padding:8px 12px;color:#888;">${formatDate(s.timestamp)}</td>
         </tr>`;
       })
@@ -95,6 +133,7 @@ export class GmailEmailService implements EmailService {
         <th style="padding:8px 12px;text-align:left;">Station</th>
         <th style="padding:8px 12px;text-align:right;">C:</th>
         ${dHeader}
+        <th style="padding:8px 12px;text-align:left;">Lampa</th>
         <th style="padding:8px 12px;text-align:left;">Senast uppdaterad</th>
       </tr>
     </thead>

@@ -28,8 +28,33 @@ function makeDDriveSpaceNullable(db: Database): void {
   }
 }
 
+const RELAY_COLUMNS: Array<[string, string]> = [
+  ["relay_enabled", "INTEGER"],
+  ["relay_connected", "INTEGER"],
+  ["relay_port", "TEXT"],
+  ["relay_error", "TEXT"],
+  ["relay_updated_at", "DATETIME"],
+  ["last_relay_email_sent", "DATETIME"],
+];
+
+function addRelayColumns(db: Database): void {
+  const tableExists = db
+    .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='machine_status'")
+    .get();
+  if (!tableExists) return; // fresh DB: the app creates the full schema on start
+  const existing = (
+    db.prepare("PRAGMA table_info(machine_status)").all() as Array<{ name: string }>
+  ).map((c) => c.name);
+  for (const [name, type] of RELAY_COLUMNS) {
+    if (!existing.includes(name)) {
+      db.run(`ALTER TABLE machine_status ADD COLUMN ${name} ${type}`);
+    }
+  }
+}
+
 const migrations: Migration[] = [
   { name: "make-d-drive-space-nullable", run: makeDDriveSpaceNullable },
+  { name: "add-relay-columns", run: addRelayColumns },
 ];
 
 console.log(`Running migrations on ${dbPath}...`);

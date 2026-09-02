@@ -29,6 +29,12 @@ try {
     "c_drive_space",
     "d_drive_space",
     "last_email_sent",
+    "relay_enabled",
+    "relay_connected",
+    "relay_port",
+    "relay_error",
+    "relay_updated_at",
+    "last_relay_email_sent",
   ];
 
   for (const col of requiredColumns) {

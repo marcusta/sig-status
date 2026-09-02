@@ -1,4 +1,12 @@
-import type { DriveStatus } from "./types";
+import { isRelayMissing, type DriveStatus, type RelayStatus } from "./types";
+
+// Short label for the relay column in the dashboard and reports.
+export function relayLabel(status: RelayStatus): string {
+  if (status.relay_enabled == null) return "-";
+  if (status.relay_enabled === false) return "Disabled";
+  if (status.relay_connected) return `OK (${status.relay_port ?? "?"})`;
+  return `Missing: ${status.relay_error ?? "unknown"}`;
+}
 
 export function htmlReport(statuses: DriveStatus[]): string {
   return `
@@ -27,6 +35,7 @@ export function htmlReport(statuses: DriveStatus[]): string {
                     <th>Machine</th>
                     <th>C Drive Space (GB)</th>
                     <th>D Drive Space (GB)</th>
+                    <th>Relay</th>
                     <th>Last Email Sent</th>
                     <th>Last updated</th>
                   </tr>
@@ -54,6 +63,7 @@ export function htmlReport(statuses: DriveStatus[]): string {
                         1
                       )}</td>
                           <td class="is-size-5 ${dWarningLevel}">${status.d_drive_space != null ? status.d_drive_space.toFixed(1) : "-"}</td>
+                          <td class="is-size-5 ${isRelayMissing(status) ? "danger" : ""}">${relayLabel(status)}</td>
                           <td class="is-size-5">${formatDate(
                             status.last_email_sent
                           )}</td>
@@ -71,6 +81,7 @@ export function htmlReport(statuses: DriveStatus[]): string {
             <p class="help mt-4">
               <span class="has-text-danger">■</span> Less than 10GB available
               <span class="ml-4 has-text-warning">■</span> Less than 20GB available
+              <span class="ml-4 has-text-danger">■</span> Relay (indicator lamp) not detected
             </p>
           </div>
         </section>

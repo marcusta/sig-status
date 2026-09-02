@@ -1,11 +1,12 @@
 import { Hono } from "hono";
 import { htmlReport } from "./html-report";
-import type {
-  AppConfig,
-  ContactFormData,
-  DriveStatusReport,
-  EmailService,
-  StatusRepository,
+import {
+  isRelayMissing,
+  type AppConfig,
+  type ContactFormData,
+  type DriveStatusReport,
+  type EmailService,
+  type StatusRepository,
 } from "./types";
 
 interface StatusPost {
@@ -15,6 +16,37 @@ interface StatusPost {
   timestamp: string;
   c_drive_space?: number;
   d_drive_space?: number;
+  relayEnabled?: boolean;
+  relayConnected?: boolean;
+  relayPort?: string;
+  relayError?: string;
+  relayUpdatedAt?: string;
+  relay_enabled?: boolean;
+  relay_connected?: boolean;
+  relay_port?: string;
+  relay_error?: string;
+  relay_updated_at?: string;
+}
+
+const RELAY_REMINDER_MS = 24 * 60 * 60 * 1000;
+
+// Machines silent longer than this are out of production and left out of the daily report.
+const INACTIVE_AFTER_MS = 4 * 30 * 24 * 60 * 60 * 1000;
+
+export function isActive(status: { timestamp: string }, now = Date.now()): boolean {
+  const reported = new Date(status.timestamp).getTime();
+  return Number.isFinite(reported) && now - reported < INACTIVE_AFTER_MS;
+}
+
+function toBool(value: unknown): boolean | null {
+  if (typeof value === "boolean") return value;
+  if (value === "true" || value === 1) return true;
+  if (value === "false" || value === 0) return false;
+  return null;
+}
+
+function toStr(value: unknown): string | null {
+  return typeof value === "string" && value !== "" ? value : null;
 }
 
 const CONTACT_RATE_LIMIT = new Map<string, number[]>();
@@ -70,10 +102,16 @@ export class MonitoringApp {
         c_drive_space: status.cDriveSpace ?? status.c_drive_space ?? 0,
         d_drive_space: status.dDriveSpace ?? status.d_drive_space ?? null,
         timestamp: status.timestamp,
+        relay_enabled: toBool(status.relayEnabled ?? status.relay_enabled),
+        relay_connected: toBool(status.relayConnected ?? status.relay_connected),
+        relay_port: toStr(status.relayPort ?? status.relay_port),
+        relay_error: toStr(status.relayError ?? status.relay_error),
+        relay_updated_at: toStr(status.relayUpdatedAt ?? status.relay_updated_at),
       };
       console.log(`Received status for ${status.machine}`);
       await this.statusRepo.saveStatus(driveStatus);
       await this.checkThresholds(driveStatus);
+      await this.checkRelay(driveStatus);
       return c.json({ success: true });
     });
 
@@ -244,9 +282,28 @@ export class MonitoringApp {
     }
   }
 
+  private async checkRelay(status: DriveStatusReport): Promise<void> {
+    if (!isRelayMissing(status)) return;
+    const lastSent = await this.statusRepo.getLastRelayEmailSentForMachine(
+      status.machine
+    );
+    const sinceLast = Date.now() - (lastSent?.getTime() || 0);
+    if (sinceLast <= RELAY_REMINDER_MS) return;
+    console.log(
+      `Sending relay missing email for ${status.machine}: ${status.relay_error}`
+    );
+    await this.emailService.sendRelayMissingEmail(status.machine, status);
+    await this.statusRepo.setLastRelayEmailSentForMachine(
+      status.machine,
+      new Date()
+    );
+  }
+
   private setupDailyReport(): void {
     setInterval(async () => {
-      const statuses = await this.statusRepo.getLatestStatuses();
+      const statuses = (await this.statusRepo.getLatestStatuses()).filter((s) =>
+        isActive(s)
+      );
       await this.emailService.sendDailyReport(statuses);
     }, 24 * 60 * 60 * 1000);
   }

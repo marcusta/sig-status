@@ -6,7 +6,7 @@ This project is part of an automation suite for an unmanned simulator golf facil
 
 ## Project Overview
 
-sig-status is a disk space monitoring and alerting system for the facility's bay PCs. It tracks drive storage (C: and D: drives) on each machine, stores metrics in SQLite, and sends email alerts when disk space falls below configurable thresholds. Includes an HTML dashboard and daily summary reports. This allows operators to be notified of issues remotely before they impact guests.
+sig-status is a monitoring and alerting system for the facility's bay PCs. It tracks drive storage (C: and D: drives) and the USB relay that drives each bay's indicator lamp, stores the latest state in SQLite, and sends email alerts when disk space falls below configurable thresholds or a relay goes missing. Includes an HTML dashboard and daily summary reports. This allows operators to be notified of issues remotely before they impact guests.
 
 ## Tech Stack
 
@@ -36,7 +36,8 @@ bun run index.ts     # Start the server (port 3004)
 
 ## Key Endpoints
 
-- `POST /status` - Receive disk space data from a machine (accepts camelCase and snake_case)
+- `POST /status` - Receive disk space and relay data from a machine (accepts camelCase and snake_case). Relay fields are optional: `relayEnabled`, `relayConnected`, `relayPort`, `relayError`, `relayUpdatedAt`. A bay with `relayEnabled: true` and `relayConnected: false` gets a relay alert email, repeated at most once per 24h (`last_relay_email_sent`).
+- The daily report email skips machines whose last report is older than 4 months (`INACTIVE_AFTER_MS` in `app.ts`); the dashboard and JSON endpoints still list them.
 - `GET /status` - JSON array of all machines' latest status
 - `GET /status/:machine` - Single machine status
 - `GET /status.html` - HTML dashboard
